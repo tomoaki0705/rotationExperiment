@@ -25,9 +25,9 @@ Mat project3DPoints(const Mat& points3D, double yaw, double pitch, double roll) 
     Mat rotationMatrix = rotationMatrixYaw * rotationMatrixPitch * rotationMatrixRoll;
 
     // Project 3D points onto 2D image
-    Mat points2D = rotationMatrix * points3D;
+    Mat result = rotationMatrix * points3D;
 
-    return points2D.rowRange(0, 2);
+    return result;
 }
 
 // Callback functions for trackbars
@@ -46,16 +46,41 @@ void onRollTrackbar(int value, void* ptr) {
     *rollPtr = value * CV_PI / 180.0;
 }
 
+Mat projetCamera2Image(const Mat& camera_coordinates)
+{
+    // Intrinsic parameters
+    double fx = 1000.0;  // focal length in x
+    double fy = 1000.0;  // focal length in y
+    double cx = 320.0;   // optical center in x
+    double cy = 240.0;   // optical center in y
+
+    // Distortion parameters (assuming no distortion)
+    cv::Mat dist_coeffs = cv::Mat::zeros(4, 1, CV_64F);
+
+    // Rotation and translation (assumed to be identity for this example)
+    cv::Mat rvec = cv::Mat::zeros(3, 1, CV_64F);
+    cv::Mat tvec = cv::Mat::zeros(3, 1, CV_64F);
+    tvec.at<double>(2) = 300;
+
+    // Build the camera matrix
+    cv::Mat camera_matrix = (cv::Mat_<double>(3, 3) << fx, 0, cx, 0, fy, cy, 0, 0, 1);
+
+    // Project 3D point to 2D
+    Mat image_points;
+    cv::projectPoints(camera_coordinates, rvec, tvec, camera_matrix, dist_coeffs, image_points);
+
+    return image_points;
+}
+
 int main() {
     // Create a blank image
-    Mat image(500, 500, CV_8UC3, Scalar(255, 255, 255));
+    Mat image(480, 640, CV_8UC3, Scalar(255, 255, 255));
 
     // Define 3D points
-    Mat points3D = (Mat_<double>(3, 4) <<
-        1, 1, 1,
-        1, -1, 1,
-        -1, -1, 1,
-        -1, 1, 1);
+    Mat points3D = (Mat_<double>(3, 10) <<
+        50, -50, -50, -40, -40, 10, 10,  -40, -40,  50,  /* X */
+       -50, -50,  50,  50,  10,  10,  0,   0, -40, -40,  /* Y */
+        10,  10,  10 , 10,  10,  10, 10,  10,  10,  10); /* Z */
 
     // Initial angles
     double yaw = 0, pitch = 0, roll = 0;
@@ -72,12 +97,18 @@ int main() {
         // Project 3D points onto 2D image
         Mat projectedPoints = project3DPoints(points3D, yaw, pitch, roll);
 
+        Mat projectedPoints2D = projetCamera2Image(projectedPoints);
+
         // Draw points on the image
         image.setTo(Scalar(255, 255, 255));
-        for (int i = 0; i < projectedPoints.cols; ++i) {
-            Point point(static_cast<int>(projectedPoints.at<double>(0, i) * 100) + 250,
-                static_cast<int>(projectedPoints.at<double>(1, i) * 100) + 250);
+        Point prev_point(static_cast<int>(projectedPoints2D.at<double>(projectedPoints2D.rows-1, 0)),
+            static_cast<int>(projectedPoints2D.at<double>(projectedPoints2D.rows-1, 1)));
+        for (int i = 0; i < projectedPoints2D.rows; ++i) {
+            Point point(static_cast<int>(projectedPoints2D.at<double>(i, 0)),
+                static_cast<int>(projectedPoints2D.at<double>(i, 1)));
             circle(image, point, 5, Scalar(0, 0, 0), -1);
+            line(image, prev_point, point, Scalar(0, 0, 0), 2);
+            prev_point = point;
         }
 
         // Display the image
