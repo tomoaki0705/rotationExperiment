@@ -6,17 +6,17 @@ using namespace std;
 // Function to project 3D points onto a 2D image
 Mat project3DPoints(const Mat& points3D, double yaw, double pitch, double roll) {
     // Define rotation matrices for yaw, pitch, and roll
-    Mat rotationMatrixYaw = (Mat_<double>(3, 3) <<
+    Mat rotationMatrixRoll = (Mat_<double>(3, 3) <<
         cos(yaw), -sin(yaw), 0,
         sin(yaw), cos(yaw), 0,
         0, 0, 1);
 
-    Mat rotationMatrixPitch = (Mat_<double>(3, 3) <<
+    Mat rotationMatrixYaw = (Mat_<double>(3, 3) <<
         cos(pitch), 0, sin(pitch),
         0, 1, 0,
         -sin(pitch), 0, cos(pitch));
 
-    Mat rotationMatrixRoll = (Mat_<double>(3, 3) <<
+    Mat rotationMatrixPitch = (Mat_<double>(3, 3) <<
         1, 0, 0,
         0, cos(roll), -sin(roll),
         0, sin(roll), cos(roll));
@@ -78,9 +78,9 @@ int main() {
 
     // Define 3D points
     Mat points3D = (Mat_<double>(3, 10) <<
-        50, -50, -50, -40, -40, 10, 10,  -40, -40,  50,  /* X */
-       -50, -50,  50,  50,  10,  10,  0,   0, -40, -40,  /* Y */
-        10,  10,  10 , 10,  10,  10, 10,  10,  10,  10); /* Z */
+        20, -22, -22, -12, -12,  19, 19,  -12,  -12,  20,  /* X */
+       -50, -50,  50,  50,  10,  10,  0,    0,  -40, -40,  /* Y */
+         0,   0,   0 ,  0,   0,   0,  0,    0,    0,   0); /* Z */
 
     // Initial angles
     double yaw = 0, pitch = 0, roll = 0;
@@ -89,9 +89,9 @@ int main() {
     namedWindow("3D Projection");
 
     // Create trackbars
-    createTrackbar("Yaw", "3D Projection", 0, 360, onYawTrackbar, &yaw);
-    createTrackbar("Pitch", "3D Projection", 0, 360, onPitchTrackbar, &pitch);
-    createTrackbar("Roll", "3D Projection", 0, 360, onRollTrackbar, &roll);
+    createTrackbar("Roll", "3D Projection", 0, 360, onYawTrackbar, &yaw);
+    createTrackbar("Yaw", "3D Projection", 0, 360, onPitchTrackbar, &pitch);
+    createTrackbar("Pitch", "3D Projection", 0, 360, onRollTrackbar, &roll);
 
     while (true) {
         // Project 3D points onto 2D image
