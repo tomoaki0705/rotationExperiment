@@ -48,7 +48,7 @@ void onRollTrackbar(int value, void* ptr) {
 
 int main() {
     // Create a blank image
-    Mat image = Mat::ones(500, 500, CV_8UC3) * Scalar(255, 255, 255);
+    Mat image(500, 500, CV_8UC3, Scalar(255, 255, 255));
 
     // Define 3D points
     Mat points3D = (Mat_<double>(3, 4) <<
