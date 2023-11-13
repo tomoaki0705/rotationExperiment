@@ -3,26 +3,58 @@
 using namespace cv;
 using namespace std;
 
+enum rotationOrder {
+    XYZ,
+    XZY,
+    YXZ,
+    YZX,
+    ZXY,
+    ZYX
+};
+
 // Function to project 3D points onto a 2D image
-Mat project3DPoints(const Mat& points3D, double yaw, double pitch, double roll) {
+Mat project3DPoints(const Mat& points3D, double yaw, double pitch, double roll, enum rotationOrder order) {
     // Define rotation matrices for yaw, pitch, and roll
     Mat rotationMatrixRoll = (Mat_<double>(3, 3) <<
-        cos(yaw), -sin(yaw), 0,
-        sin(yaw), cos(yaw), 0,
+        cos(roll), -sin(roll), 0,
+        sin(roll), cos(roll), 0,
         0, 0, 1);
 
     Mat rotationMatrixYaw = (Mat_<double>(3, 3) <<
-        cos(pitch), 0, sin(pitch),
+        cos(yaw), 0, sin(yaw),
         0, 1, 0,
-        -sin(pitch), 0, cos(pitch));
+        -sin(yaw), 0, cos(yaw));
 
     Mat rotationMatrixPitch = (Mat_<double>(3, 3) <<
         1, 0, 0,
-        0, cos(roll), -sin(roll),
-        0, sin(roll), cos(roll));
+        0, cos(pitch), -sin(pitch),
+        0, sin(pitch), cos(pitch));
 
     // Combine rotation matrices
-    Mat rotationMatrix = rotationMatrixYaw * rotationMatrixPitch * rotationMatrixRoll;
+    Mat rotationMatrix;
+    switch (order)
+    {
+    case XYZ:
+    default:
+        rotationMatrix = rotationMatrixYaw * rotationMatrixRoll * rotationMatrixPitch;
+        break;
+    case XZY:
+        rotationMatrix = rotationMatrixRoll * rotationMatrixYaw * rotationMatrixPitch;
+        break;
+    case YXZ:
+        rotationMatrix = rotationMatrixRoll * rotationMatrixPitch * rotationMatrixYaw;
+        break;
+    case YZX:
+        rotationMatrix = rotationMatrixPitch * rotationMatrixRoll * rotationMatrixYaw;
+        break;
+    case ZXY:
+        rotationMatrix = rotationMatrixYaw * rotationMatrixPitch * rotationMatrixRoll;
+        break;
+    case ZYX:
+        rotationMatrix = rotationMatrixPitch * rotationMatrixYaw * rotationMatrixRoll;
+        break;
+    }
+
 
     // Project 3D points onto 2D image
     Mat result = rotationMatrix * points3D;
@@ -84,18 +116,19 @@ int main() {
 
     // Initial angles
     double yaw = 0, pitch = 0, roll = 0;
+    rotationOrder order = rotationOrder::XYZ;
 
     // Create a window
     namedWindow("3D Projection");
 
     // Create trackbars
-    createTrackbar("Roll", "3D Projection", 0, 360, onYawTrackbar, &yaw);
-    createTrackbar("Yaw", "3D Projection", 0, 360, onPitchTrackbar, &pitch);
-    createTrackbar("Pitch", "3D Projection", 0, 360, onRollTrackbar, &roll);
+    createTrackbar("Pitch (X)", "3D Projection", 0, 360, onRollTrackbar, &pitch);
+    createTrackbar("Yaw (Y)", "3D Projection", 0, 360, onPitchTrackbar, &yaw);
+    createTrackbar("Roll (Z)", "3D Projection", 0, 360, onYawTrackbar, &roll);
 
     while (true) {
         // Project 3D points onto 2D image
-        Mat projectedPoints = project3DPoints(points3D, yaw, pitch, roll);
+        Mat projectedPoints = project3DPoints(points3D, yaw, pitch, roll, order);
 
         Mat projectedPoints2D = projetCamera2Image(projectedPoints);
 
@@ -114,8 +147,36 @@ int main() {
         // Display the image
         imshow("3D Projection", image);
 
+        char c = waitKey(1);
+        bool exitFlag = false;
         // Break the loop when 'ESC' key is pressed
-        if (waitKey(1) == 27)
+        switch (c)
+        {
+        case 27:
+            exitFlag = true;
+            break;
+        case '1':
+            order = rotationOrder::XYZ;
+            break;
+        case '2':
+            order = rotationOrder::XZY;
+            break;
+        case '3':
+            order = rotationOrder::YXZ;
+            break;
+        case '4':
+            order = rotationOrder::YZX;
+            break;
+        case '5':
+            order = rotationOrder::ZXY;
+            break;
+        case '6':
+            order = rotationOrder::ZYX;
+            break;
+        default:
+            break;
+        }
+        if (exitFlag)
             break;
     }
 
