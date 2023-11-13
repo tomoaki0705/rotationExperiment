@@ -55,31 +55,9 @@ Mat project3DPoints(const Mat& points3D, double yaw, double pitch, double roll, 
         break;
     }
 
+    // Rotate 3D points
+    Mat rotated = rotationMatrix * points3D;
 
-    // Project 3D points onto 2D image
-    Mat result = rotationMatrix * points3D;
-
-    return result;
-}
-
-// Callback functions for trackbars
-void onYawTrackbar(int value, void* ptr) {
-    double* yawPtr = static_cast<double*>(ptr);
-    *yawPtr = value * CV_PI / 180.0;
-}
-
-void onPitchTrackbar(int value, void* ptr) {
-    double* pitchPtr = static_cast<double*>(ptr);
-    *pitchPtr = value * CV_PI / 180.0;
-}
-
-void onRollTrackbar(int value, void* ptr) {
-    double* rollPtr = static_cast<double*>(ptr);
-    *rollPtr = value * CV_PI / 180.0;
-}
-
-Mat projetCamera2Image(const Mat& camera_coordinates)
-{
     // Intrinsic parameters
     double fx = 1000.0;  // focal length in x
     double fy = 1000.0;  // focal length in y
@@ -99,9 +77,15 @@ Mat projetCamera2Image(const Mat& camera_coordinates)
 
     // Project 3D point to 2D
     Mat image_points;
-    cv::projectPoints(camera_coordinates, rvec, tvec, camera_matrix, dist_coeffs, image_points);
+    cv::projectPoints(rotated, rvec, tvec, camera_matrix, dist_coeffs, image_points);
 
     return image_points;
+}
+
+// Callback functions for trackbars
+void onEulerTrackbar(int value, void* ptr) {
+    double* eulerAnglePtr = static_cast<double*>(ptr);
+    *eulerAnglePtr = value * CV_PI / 180.0;
 }
 
 void setAllTrackBarPos(int pos)
@@ -129,16 +113,14 @@ int main() {
     namedWindow("3D Projection");
 
     // Create trackbars
-    createTrackbar("Pitch (X)", "3D Projection", 0, 720, onRollTrackbar, &pitch);
-    createTrackbar("Yaw (Y)", "3D Projection", 0, 720, onPitchTrackbar, &yaw);
-    createTrackbar("Roll (Z)", "3D Projection", 0, 720, onYawTrackbar, &roll);
+    createTrackbar("Pitch (X)", "3D Projection", 0, 720, onEulerTrackbar, &pitch);
+    createTrackbar("Yaw (Y)", "3D Projection", 0, 720, onEulerTrackbar, &yaw);
+    createTrackbar("Roll (Z)", "3D Projection", 0, 720, onEulerTrackbar, &roll);
     setAllTrackBarPos(360);
 
     while (true) {
         // Project 3D points onto 2D image
-        Mat projectedPoints = project3DPoints(points3D, yaw, pitch, roll, order);
-
-        Mat projectedPoints2D = projetCamera2Image(projectedPoints);
+        Mat projectedPoints2D = project3DPoints(points3D, yaw, pitch, roll, order); 
 
         // Draw points on the image
         image.setTo(Scalar(255, 255, 255));
