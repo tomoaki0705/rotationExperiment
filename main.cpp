@@ -104,6 +104,13 @@ Mat projetCamera2Image(const Mat& camera_coordinates)
     return image_points;
 }
 
+void setAllTrackBarPos(int pos)
+{
+    setTrackbarPos("Pitch (X)", "3D Projection", pos);
+    setTrackbarPos("Yaw (Y)", "3D Projection", pos);
+    setTrackbarPos("Roll (Z)", "3D Projection", pos);
+}
+
 int main() {
     // Create a blank image
     Mat image(480, 640, CV_8UC3, Scalar(255, 255, 255));
@@ -122,9 +129,10 @@ int main() {
     namedWindow("3D Projection");
 
     // Create trackbars
-    createTrackbar("Pitch (X)", "3D Projection", 0, 360, onRollTrackbar, &pitch);
-    createTrackbar("Yaw (Y)", "3D Projection", 0, 360, onPitchTrackbar, &yaw);
-    createTrackbar("Roll (Z)", "3D Projection", 0, 360, onYawTrackbar, &roll);
+    createTrackbar("Pitch (X)", "3D Projection", 0, 720, onRollTrackbar, &pitch);
+    createTrackbar("Yaw (Y)", "3D Projection", 0, 720, onPitchTrackbar, &yaw);
+    createTrackbar("Roll (Z)", "3D Projection", 0, 720, onYawTrackbar, &roll);
+    setAllTrackBarPos(360);
 
     while (true) {
         // Project 3D points onto 2D image
@@ -152,8 +160,13 @@ int main() {
         // Break the loop when 'ESC' key is pressed
         switch (c)
         {
+        case 'q':
+        case 'Q':
         case 27:
             exitFlag = true;
+            break;
+        case 'r':
+            setAllTrackBarPos(360);
             break;
         case '1':
             order = rotationOrder::XYZ;
