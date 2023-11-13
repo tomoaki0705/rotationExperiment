@@ -55,6 +55,10 @@ Mat project3DPoints(const Mat& points3D, double yaw, double pitch, double roll, 
         break;
     }
 
+
+    Mat mtxR, mtxQ, Qx, Qy, Qz;
+    RQDecomp3x3(rotationMatrix, mtxR, mtxQ, Qx, Qy, Qz);
+
     // Rotate 3D points
     Mat rotated = rotationMatrix * points3D;
 
