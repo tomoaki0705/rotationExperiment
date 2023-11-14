@@ -36,22 +36,22 @@ Mat project3DPoints(const Mat& points3D, double yaw, double pitch, double roll, 
     {
     case XYZ:
     default:
-        rotationMatrix = rotationMatrixYaw * rotationMatrixRoll * rotationMatrixPitch;
+        rotationMatrix = rotationMatrixPitch * rotationMatrixYaw * rotationMatrixRoll;
         break;
     case XZY:
-        rotationMatrix = rotationMatrixRoll * rotationMatrixYaw * rotationMatrixPitch;
-        break;
-    case YXZ:
-        rotationMatrix = rotationMatrixRoll * rotationMatrixPitch * rotationMatrixYaw;
-        break;
-    case YZX:
         rotationMatrix = rotationMatrixPitch * rotationMatrixRoll * rotationMatrixYaw;
         break;
-    case ZXY:
+    case YXZ:
         rotationMatrix = rotationMatrixYaw * rotationMatrixPitch * rotationMatrixRoll;
         break;
+    case YZX:
+        rotationMatrix = rotationMatrixYaw * rotationMatrixRoll * rotationMatrixPitch;
+        break;
+    case ZXY:
+        rotationMatrix = rotationMatrixRoll * rotationMatrixPitch * rotationMatrixYaw;
+        break;
     case ZYX:
-        rotationMatrix = rotationMatrixPitch * rotationMatrixYaw * rotationMatrixRoll;
+        rotationMatrix = rotationMatrixRoll * rotationMatrixYaw * rotationMatrixPitch;
         break;
     }
 
