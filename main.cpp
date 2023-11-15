@@ -53,6 +53,14 @@ void mat2euler( Mat& rotationMatrix, double& yaw, double& pitch, double& roll, e
                 // (3pi/2, 2pi) : asin + acos = 0
                 // (pi, 3pi/2)  : asin - acos = pi
                 roll = atan2(-r01, r00);
+                Mat inversePitch = (Mat_<double>(3, 3) <<  1, 0, 0, 0, cos(-pitch), -sin(-pitch), 0, sin(-pitch), cos(-pitch));
+                Mat inverseRoll = (Mat_<double>(3, 3) << cos(-roll), -sin(-roll), 0, sin(-roll), cos(-roll), 0, 0, 0, 1);
+                Mat computedYaw = inversePitch * rotationMatrix * inverseRoll;
+                std::cout << computedYaw.at<double>(0, 0) << ',' << computedYaw.at<double>(2, 2) << '\t';
+                std::cout << computedYaw.at<double>(0, 2) << ',' << computedYaw.at<double>(2, 0) << '\t';
+                double yaw00 = acos(computedYaw.at<double>(0, 0));
+                double yaw02 = asin(computedYaw.at<double>(0, 2));
+                std::cout << yaw00 << ',' << yaw02 << endl;
             }
             else
             {
