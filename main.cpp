@@ -3,6 +3,7 @@
 using namespace cv;
 using namespace std;
 double yaw_, pitch_, roll_;
+Mat mtxR, mtxQ, Qx, Qy, Qz;
 
 enum rotationOrder {
     XYZ,
@@ -31,7 +32,6 @@ void mat2euler( Mat& rotationMatrix, double& yaw, double& pitch, double& roll, e
         {
             if (r02 > -1)
             {
-                cout << "first" << '\t';
                 yaw = asin(r02);
                 pitch = atan2(-r12, r22);
                 double cosyaw = -r12 / sin(pitch);
@@ -56,7 +56,6 @@ void mat2euler( Mat& rotationMatrix, double& yaw, double& pitch, double& roll, e
             }
             else
             {
-                cout << "second" << '\t';
                 yaw = -CV_PI / 2;
                 pitch = -atan2(r10, r11);
                 roll = 0;
@@ -65,7 +64,6 @@ void mat2euler( Mat& rotationMatrix, double& yaw, double& pitch, double& roll, e
         else // r02 = +1
         {            
             {
-                cout << "third" << '\t';
                 yaw = CV_PI / 2;
                 pitch = atan2(r10, r11);
                 roll = 0;
@@ -132,12 +130,11 @@ Mat project3DPoints(const Mat& points3D, double yaw, double pitch, double roll, 
     }
 
 
-    Mat mtxR, mtxQ, Qx, Qy, Qz;
     RQDecomp3x3(rotationMatrix, mtxR, mtxQ, Qx, Qy, Qz);
 
 
     mat2euler(rotationMatrix, yaw_, pitch_, roll_, rotationOrder::XYZ);
-    std::cout << yaw << ',' << yaw_ << '\t' << pitch << ',' << pitch_ << '\t' << roll << ',' << roll_ << endl;
+    //std::cout << yaw << ',' << yaw_ << '\t' << pitch << ',' << pitch_ << '\t' << roll << ',' << roll_ << endl;
 
     // Rotate 3D points
     Mat rotated = rotationMatrix * points3D;
@@ -181,11 +178,11 @@ void putTextInternal(Mat& image, const string& result, const Point position)
 void drawDebug(Mat& image, double yaw, double pitch, double roll, double decomposedYaw, double decomposedPitch, double decomposedRoll)
 {
     std::string result = cv::format("%1.3f, %1.3f, %1.3f", yaw, pitch, roll);
-    cv::Point textPosition(5, 420);
+    cv::Point textPosition(5, 580);
     putTextInternal(image, result, textPosition);
 
     result = cv::format("%1.3f, %1.3f, %1.3f", decomposedYaw, decomposedPitch, decomposedRoll);
-    textPosition = Point(5, 460);
+    textPosition = Point(5, 620);
     putTextInternal(image, result, textPosition);
 }
 
@@ -205,7 +202,7 @@ void setAllTrackBarPos(int pos)
 
 int main() {
     // Create a blank image
-    Mat image(480, 640, CV_8UC3, Scalar(255, 255, 255));
+    Mat image(640, 640, CV_8UC3, Scalar(255, 255, 255));
 
     // Define 3D points
     Mat points3D = (Mat_<double>(3, 10) <<
