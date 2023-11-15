@@ -166,6 +166,30 @@ Mat project3DPoints(const Mat& points3D, double yaw, double pitch, double roll, 
     return image_points;
 }
 
+void putTextInternal(Mat& image, const string& result, const Point position)
+{
+    // Font settings
+    int fontFace = cv::FONT_HERSHEY_SIMPLEX;
+    double fontScale = 1.0;
+    int thickness = 2;
+    cv::Scalar textColor(0, 0, 0); // Black color
+
+    // Paste text on the image
+    cv::putText(image, result, position, fontFace, fontScale, textColor, thickness);
+}
+
+void drawDebug(Mat& image, double yaw, double pitch, double roll, double decomposedYaw, double decomposedPitch, double decomposedRoll)
+{
+    std::string result = cv::format("%1.3f, %1.3f, %1.3f", yaw, pitch, roll);
+    cv::Point textPosition(5, 420);
+    putTextInternal(image, result, textPosition);
+
+    result = cv::format("%1.3f, %1.3f, %1.3f", decomposedYaw, decomposedPitch, decomposedRoll);
+    textPosition = Point(5, 460);
+    putTextInternal(image, result, textPosition);
+}
+
+
 // Callback functions for trackbars
 void onEulerTrackbar(int value, void* ptr) {
     double* eulerAnglePtr = static_cast<double*>(ptr);
@@ -208,6 +232,10 @@ int main() {
 
         // Draw points on the image
         image.setTo(Scalar(255, 255, 255));
+
+        // draw debug info
+        drawDebug(image, yaw, pitch, roll, yaw_, pitch_, roll_);
+
         Point prev_point(static_cast<int>(projectedPoints2D.at<double>(projectedPoints2D.rows-1, 0)),
             static_cast<int>(projectedPoints2D.at<double>(projectedPoints2D.rows-1, 1)));
         for (int i = 0; i < projectedPoints2D.rows; ++i) {
