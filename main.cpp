@@ -1,7 +1,8 @@
-#include <opencv2/opencv.hpp>
+﻿#include <opencv2/opencv.hpp>
 
 using namespace cv;
 using namespace std;
+double yaw_, pitch_, roll_;
 
 enum rotationOrder {
     XYZ,
@@ -11,6 +12,81 @@ enum rotationOrder {
     ZXY,
     ZYX
 };
+
+void mat2euler( Mat& rotationMatrix, double& yaw, double& pitch, double& roll, enum rotationOrder order)
+{
+    double r00 = rotationMatrix.at<double>(0, 0);
+    double r01 = rotationMatrix.at<double>(0, 1);
+    double r02 = rotationMatrix.at<double>(0, 2);
+    double r10 = rotationMatrix.at<double>(1, 0);
+    double r11 = rotationMatrix.at<double>(1, 1);
+    double r12 = rotationMatrix.at<double>(1, 2);
+    double r20 = rotationMatrix.at<double>(2, 0);
+    double r21 = rotationMatrix.at<double>(2, 1);
+    double r22 = rotationMatrix.at<double>(2, 2);
+    switch (order)
+    {
+    case XYZ:
+        if (r02 < 1)
+        {
+            if (r02 > -1)
+            {
+                cout << "first" << '\t';
+                yaw = asin(r02);
+                pitch = atan2(-r12, r22);
+                double cosyaw = -r12 / sin(pitch);
+                double yaw_ = acos(cosyaw);
+                if (abs(yaw - yaw_) < 0.01)
+                {
+
+                }
+                else if (abs(yaw + yaw_ -CV_PI) < 0.01)
+                {
+                    yaw = CV_PI - yaw;
+                }
+                else if (abs(abs(yaw - yaw_) - CV_PI) < 0.01)
+                {
+                    yaw = - yaw_;
+                }
+                // (0, pi/2)    : asin = acos
+                // (pi/2, pi)   : asin + acos = pi
+                // (3pi/2, 2pi) : asin + acos = 0
+                // (pi, 3pi/2)  : asin - acos = pi
+                roll = atan2(-r01, r00);
+            }
+            else
+            {
+                cout << "second" << '\t';
+                yaw = -CV_PI / 2;
+                pitch = -atan2(r10, r11);
+                roll = 0;
+            }
+        }
+        else // r02 = +1
+        {            
+            {
+                cout << "third" << '\t';
+                yaw = CV_PI / 2;
+                pitch = atan2(r10, r11);
+                roll = 0;
+            }
+        }
+        break;
+    case XZY:
+        break;
+    case YXZ:
+        break;
+    case YZX:
+        break;
+    case ZXY:
+        break;
+    case ZYX:
+        break;
+    default:
+        break;
+    }
+
+}
 
 // Function to project 3D points onto a 2D image
 Mat project3DPoints(const Mat& points3D, double yaw, double pitch, double roll, enum rotationOrder order) {
@@ -58,6 +134,10 @@ Mat project3DPoints(const Mat& points3D, double yaw, double pitch, double roll, 
 
     Mat mtxR, mtxQ, Qx, Qy, Qz;
     RQDecomp3x3(rotationMatrix, mtxR, mtxQ, Qx, Qy, Qz);
+
+
+    mat2euler(rotationMatrix, yaw_, pitch_, roll_, rotationOrder::XYZ);
+    std::cout << yaw << ',' << yaw_ << '\t' << pitch << ',' << pitch_ << '\t' << roll << ',' << roll_ << endl;
 
     // Rotate 3D points
     Mat rotated = rotationMatrix * points3D;
@@ -120,7 +200,7 @@ int main() {
     createTrackbar("Pitch (X)", "3D Projection", 0, 720, onEulerTrackbar, &pitch);
     createTrackbar("Yaw (Y)", "3D Projection", 0, 720, onEulerTrackbar, &yaw);
     createTrackbar("Roll (Z)", "3D Projection", 0, 720, onEulerTrackbar, &roll);
-    setAllTrackBarPos(360);
+    setAllTrackBarPos(0);
 
     while (true) {
         // Project 3D points onto 2D image
@@ -152,7 +232,7 @@ int main() {
             exitFlag = true;
             break;
         case 'r':
-            setAllTrackBarPos(360);
+            setAllTrackBarPos(0);
             break;
         case '1':
             order = rotationOrder::XYZ;
