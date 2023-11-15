@@ -34,33 +34,7 @@ void mat2euler( Mat& rotationMatrix, double& yaw, double& pitch, double& roll, e
             {
                 yaw = asin(r02);
                 pitch = atan2(-r12, r22);
-                double cosyaw = -r12 / sin(pitch);
-                double yaw_ = acos(cosyaw);
-                if (abs(yaw - yaw_) < 0.01)
-                {
-
-                }
-                else if (abs(yaw + yaw_ -CV_PI) < 0.01)
-                {
-                    yaw = CV_PI - yaw;
-                }
-                else if (abs(abs(yaw - yaw_) - CV_PI) < 0.01)
-                {
-                    yaw = - yaw_;
-                }
-                // (0, pi/2)    : asin = acos
-                // (pi/2, pi)   : asin + acos = pi
-                // (3pi/2, 2pi) : asin + acos = 0
-                // (pi, 3pi/2)  : asin - acos = pi
                 roll = atan2(-r01, r00);
-                Mat inversePitch = (Mat_<double>(3, 3) <<  1, 0, 0, 0, cos(-pitch), -sin(-pitch), 0, sin(-pitch), cos(-pitch));
-                Mat inverseRoll = (Mat_<double>(3, 3) << cos(-roll), -sin(-roll), 0, sin(-roll), cos(-roll), 0, 0, 0, 1);
-                Mat computedYaw = inversePitch * rotationMatrix * inverseRoll;
-                std::cout << computedYaw.at<double>(0, 0) << ',' << computedYaw.at<double>(2, 2) << '\t';
-                std::cout << computedYaw.at<double>(0, 2) << ',' << computedYaw.at<double>(2, 0) << '\t';
-                double yaw00 = acos(computedYaw.at<double>(0, 0));
-                double yaw02 = asin(computedYaw.at<double>(0, 2));
-                std::cout << yaw00 << ',' << yaw02 << endl;
             }
             else
             {
@@ -79,14 +53,125 @@ void mat2euler( Mat& rotationMatrix, double& yaw, double& pitch, double& roll, e
         }
         break;
     case XZY:
+        if (r01 < 1)
+        {
+            if (r01 > -1)
+            {
+                roll = asin(-r01);
+                pitch = atan2(r21, r11);
+                yaw = atan2(r02, r00);
+            }
+            else
+            {
+                roll = -CV_PI / 2;
+                pitch = -atan2(r20, r22);
+                yaw = 0;
+            }
+        }
+        else // r01 = +1
+        {
+            {
+                roll = -CV_PI / 2;
+                pitch = atan2(-r20, r22);
+                yaw = 0;
+            }
+        }
         break;
     case YXZ:
+        if (r12 < 1)
+        {
+            if (r12 > -1)
+            {
+                pitch = asin(-r12);
+                yaw = atan2(r02, r22);
+                roll = atan2(r10, r11);
+            }
+            else
+            {
+                pitch = CV_PI / 2;
+                yaw = -atan2(-r01, r00);
+                roll = 0;
+            }
+        }
+        else
+        {
+            pitch = -CV_PI / 2;
+            yaw = atan2(-r01, r00);
+            roll = 0;
+        }
         break;
     case YZX:
+        if (r10 < 1)
+        {
+            if (r10 > -1)
+            {
+                roll = asin(r10);
+                yaw = atan2(-r20, r00);
+                pitch = atan2(-r12, r11);
+            }
+            else
+            {
+                roll = -CV_PI / 2;
+                yaw = -atan2(r21, r22);
+                pitch = 0;
+            }
+        }
+        else // r01 = +1
+        {
+            {
+                roll = -CV_PI / 2;
+                yaw = atan2(r21, r22);
+                pitch = 0;
+            }
+        }
         break;
     case ZXY:
+        if (r21 < 1)
+        {
+            if (r21 > -1)
+            {
+                pitch = asin(r21);
+                yaw = atan2(-r01, r11);
+                roll = atan2(-r20, r22);
+            }
+            else
+            {
+                pitch = -CV_PI / 2;
+                yaw = -atan2(r02, r00);
+                roll = 0;
+            }
+        }
+        else
+        {
+            pitch = CV_PI / 2;
+            yaw = atan2(r02, r00);
+            roll = 0;
+        }
         break;
     case ZYX:
+        if (r02 < 1)
+        {
+            if (r02 > -1)
+            {
+                yaw = asin(-r20);
+                roll = atan2(r10, r00);
+                pitch = atan2(r21, r22);
+            }
+            else
+            {
+                yaw = CV_PI / 2;
+                roll = -atan2(-r12, r11);
+                pitch = 0;
+            }
+        }
+        else // r02 = +1
+        {
+            {
+                yaw = -CV_PI / 2;
+                roll = atan2(-r12, r11);
+                pitch = 0;
+            }
+        }
         break;
     default:
         break;
@@ -95,7 +180,7 @@ void mat2euler( Mat& rotationMatrix, double& yaw, double& pitch, double& roll, e
 }
 
 // Function to project 3D points onto a 2D image
-Mat project3DPoints(const Mat& points3D, double yaw, double pitch, double roll, enum rotationOrder order) {
+Mat project3DPoints(const Mat& points3D, double yaw, double pitch, double roll, enum rotationOrder order, enum rotationOrder decompose) {
     // Define rotation matrices for yaw, pitch, and roll
     Mat rotationMatrixRoll = (Mat_<double>(3, 3) <<
         cos(roll), -sin(roll), 0,
@@ -141,7 +226,7 @@ Mat project3DPoints(const Mat& points3D, double yaw, double pitch, double roll, 
     RQDecomp3x3(rotationMatrix, mtxR, mtxQ, Qx, Qy, Qz);
 
 
-    mat2euler(rotationMatrix, yaw_, pitch_, roll_, rotationOrder::XYZ);
+    mat2euler(rotationMatrix, yaw_, pitch_, roll_, decompose);
     //std::cout << yaw << ',' << yaw_ << '\t' << pitch << ',' << pitch_ << '\t' << roll << ',' << roll_ << endl;
 
     // Rotate 3D points
@@ -220,7 +305,8 @@ int main() {
 
     // Initial angles
     double yaw = 0, pitch = 0, roll = 0;
-    rotationOrder order = rotationOrder::XYZ;
+    rotationOrder constructOrder = rotationOrder::XYZ;
+    rotationOrder decomposeOrder = rotationOrder::XYZ;
 
     // Create a window
     namedWindow("3D Projection");
@@ -233,7 +319,7 @@ int main() {
 
     while (true) {
         // Project 3D points onto 2D image
-        Mat projectedPoints2D = project3DPoints(points3D, yaw, pitch, roll, order); 
+        Mat projectedPoints2D = project3DPoints(points3D, yaw, pitch, roll, constructOrder, decomposeOrder);
 
         // Draw points on the image
         image.setTo(Scalar(255, 255, 255));
@@ -268,22 +354,40 @@ int main() {
             setAllTrackBarPos(0);
             break;
         case '1':
-            order = rotationOrder::XYZ;
+            constructOrder = rotationOrder::XYZ;
             break;
         case '2':
-            order = rotationOrder::XZY;
+            constructOrder = rotationOrder::XZY;
             break;
         case '3':
-            order = rotationOrder::YXZ;
+            constructOrder = rotationOrder::YXZ;
             break;
         case '4':
-            order = rotationOrder::YZX;
+            constructOrder = rotationOrder::YZX;
             break;
         case '5':
-            order = rotationOrder::ZXY;
+            constructOrder = rotationOrder::ZXY;
             break;
         case '6':
-            order = rotationOrder::ZYX;
+            constructOrder = rotationOrder::ZYX;
+            break;
+        case '!':
+            decomposeOrder = rotationOrder::XYZ;
+            break;
+        case '@':
+            decomposeOrder = rotationOrder::XZY;
+            break;
+        case '#':
+            decomposeOrder = rotationOrder::YXZ;
+            break;
+        case '$':
+            decomposeOrder = rotationOrder::YZX;
+            break;
+        case '%':
+            decomposeOrder = rotationOrder::ZXY;
+            break;
+        case '^':
+            decomposeOrder = rotationOrder::ZYX;
             break;
         default:
             break;
