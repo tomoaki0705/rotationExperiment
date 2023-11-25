@@ -5,8 +5,6 @@
 using namespace cv;
 using namespace std;
 double yaw_, pitch_, roll_;
-Mat mtxR, mtxQ, Qx, Qy, Qz;
-Vec3d decomposedEuler;
 
 inline double deg2rad(double degree)
 {
@@ -226,21 +224,6 @@ Mat project3DPoints(const Mat& points3D, double yaw, double pitch, double roll, 
     }
 
 
-    decomposedEuler = RQDecomp3x3(rotationMatrix, mtxR, mtxQ, Qx, Qy, Qz);
-    volatile bool flag = false;
-    if (flag)
-    {
-        cout << rotationMatrixPitch << endl;
-        cout << Qx << endl;
-        cout << "=========" << endl;
-        cout << rotationMatrixYaw << endl;
-        cout << Qy << endl;
-        cout << "=========" << endl;
-        cout << rotationMatrixRoll << endl;
-        cout << Qz << endl;
-        cout << "=========" << endl;
-    }
-
 
     mat2euler(rotationMatrix, yaw_, pitch_, roll_, decompose);
     //std::cout << yaw << ',' << yaw_ << '\t' << pitch << ',' << pitch_ << '\t' << roll << ',' << roll_ << endl;
@@ -284,26 +267,40 @@ void putTextInternal(Mat& image, const string& result, const Point position)
     cv::putText(image, result, position, fontFace, fontScale, textColor, thickness);
 }
 
-void drawDebug(Mat& image, double yaw, double pitch, double roll, double decomposedYaw, double decomposedPitch, double decomposedRoll)
+void drawDebug(Mat& image, CRotationExperiment& rotationEx)
 {
-    std::string result = cv::format("% 3.2f, % 3.2f, % 3.2f", rad2deg(pitch), rad2deg(yaw), rad2deg(roll));
-    cv::Point textPosition(5, 550);
+    // Input angle
+    std::string result = cv::format(
+        "% 3.2f, % 3.2f, % 3.2f", 
+        rad2deg(rotationEx.getPitch()), 
+        rad2deg(rotationEx.getYaw()), 
+        rad2deg(rotationEx.getRoll()));
+    cv::Point textPosition(5, image.rows - 90);
     putTextInternal(image, result, textPosition);
 
-    result = cv::format("% 3.2f, % 3.2f, % 3.2f", rad2deg(decomposedPitch), rad2deg(decomposedYaw), rad2deg(decomposedRoll));
-    textPosition = Point(5, 590);
+    // Decompose matrix to Euler
+    angle decomposePitch = 0.;
+    angle decomposeYaw = 0.;
+    angle decomposeRoll = 0.;
+    rotationEx.decomposeEuler(decomposePitch, decomposeYaw, decomposeRoll);
+
+    result = cv::format(
+        "% 3.2f, % 3.2f, % 3.2f", 
+        rad2deg(decomposePitch), 
+        rad2deg(decomposeYaw), 
+        rad2deg(decomposeRoll));
+    textPosition = Point(5, image.rows - 50);
     putTextInternal(image, result, textPosition);
 
-    //double pitchAPI = atan2(Qx.at<double>(1, 2), Qx.at<double>(2, 2));
-    //double r00 = Qy.at<double>(0, 0);
-    //double r02 = Qy.at<double>(0, 2);
-    //double yawAPI = atan2(r00, r02);
-    //double rollAPI = atan2(Qz.at<double>(0, 0), Qz.at<double>(1, 0));
-    double pitchAPI = decomposedEuler(0);
-    double yawAPI = decomposedEuler(1);
-    double rollAPI = decomposedEuler(2);
+    // Use RQDecomomp3x3
+    Mat mtxR, mtxQ, Qx, Qy, Qz;
+    Vec3d decomposedEuler = RQDecomp3x3(rotationEx.getRotationMatrix(), 
+                                        mtxR, mtxQ, Qx, Qy, Qz);
+    angle pitchAPI = decomposedEuler(0);
+    angle yawAPI = decomposedEuler(1);
+    angle rollAPI = decomposedEuler(2);
     result = cv::format("% 3.2f, % 3.2f, % 3.2f", pitchAPI, yawAPI, rollAPI);
-    textPosition = Point(5, 630);
+    textPosition = Point(5, image.rows - 10);
     putTextInternal(image, result, textPosition);
 }
 
@@ -340,30 +337,35 @@ int main() {
     namedWindow("3D Projection");
 
     // Create trackbars
-    createTrackbar("Pitch (X)", "3D Projection", 0, 720, onEulerTrackbar, &pitch);
-    createTrackbar("Yaw (Y)", "3D Projection", 0, 720, onEulerTrackbar, &yaw);
-    createTrackbar("Roll (Z)", "3D Projection", 0, 720, onEulerTrackbar, &roll);
+    createTrackbar("Pitch (X)", "3D Projection", 0, 360, onEulerTrackbar, &pitch);
+    createTrackbar("Yaw (Y)", "3D Projection", 0, 360, onEulerTrackbar, &yaw);
+    createTrackbar("Roll (Z)", "3D Projection", 0, 360, onEulerTrackbar, &roll);
     setAllTrackBarPos(0);
+    CRotationExperiment rotationEx;
+    rotationEx.setComposeOrder(rotationOrder::XYZ);
+    rotationEx.setDecomposeOrder(rotationOrder::XYZ);
 
     while (true) {
+        rotationEx.setPitch(pitch);
+        rotationEx.setYaw(yaw);
+        rotationEx.setRoll(roll);
+
         // Project 3D points onto 2D image
         Mat projectedPoints2D = project3DPoints(points3D, yaw, pitch, roll, constructOrder, decomposeOrder);
-
-        // Draw points on the image
-        image.setTo(Scalar(255, 255, 255));
+        rotationEx.drawProjectedImage(points3D, image);
 
         // draw debug info
-        drawDebug(image, yaw, pitch, roll, yaw_, pitch_, roll_);
+        drawDebug(image, rotationEx);
 
-        Point prev_point(static_cast<int>(projectedPoints2D.at<double>(projectedPoints2D.rows-1, 0)),
-            static_cast<int>(projectedPoints2D.at<double>(projectedPoints2D.rows-1, 1)));
-        for (int i = 0; i < projectedPoints2D.rows; ++i) {
-            Point point(static_cast<int>(projectedPoints2D.at<double>(i, 0)),
-                static_cast<int>(projectedPoints2D.at<double>(i, 1)));
-            circle(image, point, 5, Scalar(0, 0, 0), -1);
-            line(image, prev_point, point, Scalar(0, 0, 0), 2);
-            prev_point = point;
-        }
+        //Point prev_point(static_cast<int>(projectedPoints2D.at<double>(projectedPoints2D.rows-1, 0)),
+        //    static_cast<int>(projectedPoints2D.at<double>(projectedPoints2D.rows-1, 1)));
+        //for (int i = 0; i < projectedPoints2D.rows; ++i) {
+        //    Point point(static_cast<int>(projectedPoints2D.at<double>(i, 0)),
+        //        static_cast<int>(projectedPoints2D.at<double>(i, 1)));
+        //    circle(image, point, 5, Scalar(0, 0, 0), -1);
+        //    line(image, prev_point, point, Scalar(0, 0, 0), 2);
+        //    prev_point = point;
+        //}
 
         // Display the image
         imshow("3D Projection", image);
@@ -382,40 +384,40 @@ int main() {
             setAllTrackBarPos(0);
             break;
         case '1':
-            constructOrder = rotationOrder::XYZ;
+            rotationEx.setComposeOrder(rotationOrder::XYZ);
             break;
         case '2':
-            constructOrder = rotationOrder::XZY;
+            rotationEx.setComposeOrder(rotationOrder::XZY);
             break;
         case '3':
-            constructOrder = rotationOrder::YXZ;
+            rotationEx.setComposeOrder(rotationOrder::YXZ);
             break;
         case '4':
-            constructOrder = rotationOrder::YZX;
+            rotationEx.setComposeOrder(rotationOrder::YZX);
             break;
         case '5':
-            constructOrder = rotationOrder::ZXY;
+            rotationEx.setComposeOrder(rotationOrder::ZXY);
             break;
         case '6':
-            constructOrder = rotationOrder::ZYX;
+            rotationEx.setComposeOrder(rotationOrder::ZYX);
             break;
         case '!':
-            decomposeOrder = rotationOrder::XYZ;
+            rotationEx.setDecomposeOrder(rotationOrder::XYZ);
             break;
         case '@':
-            decomposeOrder = rotationOrder::XZY;
+            rotationEx.setDecomposeOrder(rotationOrder::XZY);
             break;
         case '#':
-            decomposeOrder = rotationOrder::YXZ;
+            rotationEx.setDecomposeOrder(rotationOrder::YXZ);
             break;
         case '$':
-            decomposeOrder = rotationOrder::YZX;
+            rotationEx.setDecomposeOrder(rotationOrder::YZX);
             break;
         case '%':
-            decomposeOrder = rotationOrder::ZXY;
+            rotationEx.setDecomposeOrder(rotationOrder::ZXY);
             break;
         case '^':
-            decomposeOrder = rotationOrder::ZYX;
+            rotationEx.setDecomposeOrder(rotationOrder::ZYX);
             break;
         default:
             break;
