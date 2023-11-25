@@ -1,19 +1,12 @@
 ﻿#include <opencv2/opencv.hpp>
+#include "common.h"
+#include "rotationExperiment.h"
 
 using namespace cv;
 using namespace std;
 double yaw_, pitch_, roll_;
 Mat mtxR, mtxQ, Qx, Qy, Qz;
 Vec3d decomposedEuler;
-
-enum rotationOrder {
-    XYZ,
-    XZY,
-    YXZ,
-    YZX,
-    ZXY,
-    ZYX
-};
 
 inline double deg2rad(double degree)
 {
@@ -23,13 +16,6 @@ inline double deg2rad(double degree)
 inline double rad2deg(double radian)
 {
     return (radian * 180.) / CV_PI;
-}
-
-bool compareHex(double value, uint64_t hexLiteral) {
-    uint64_t doubleValueAsHex;
-    std::memcpy(&doubleValueAsHex, &value, sizeof(double));
-
-    return doubleValueAsHex == hexLiteral;
 }
 
 void mat2euler( Mat& rotationMatrix, double& yaw, double& pitch, double& roll, enum rotationOrder order)
@@ -194,9 +180,6 @@ void mat2euler( Mat& rotationMatrix, double& yaw, double& pitch, double& roll, e
     default:
         break;
     }
-    yaw = compareHex(yaw, 0x8000000000000000) ? 0. : yaw;
-    pitch = compareHex(pitch, 0x8000000000000000) ? 0. : pitch;
-    roll = compareHex(roll, 0x8000000000000000) ? 0. : roll;
 }
 
 // Function to project 3D points onto a 2D image
