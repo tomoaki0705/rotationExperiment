@@ -4,6 +4,7 @@ using namespace cv;
 using namespace std;
 double yaw_, pitch_, roll_;
 Mat mtxR, mtxQ, Qx, Qy, Qz;
+Vec3d decomposedEuler;
 
 enum rotationOrder {
     XYZ,
@@ -13,6 +14,23 @@ enum rotationOrder {
     ZXY,
     ZYX
 };
+
+inline double deg2rad(double degree)
+{
+    return (degree * CV_PI) / 180.;
+}
+
+inline double rad2deg(double radian)
+{
+    return (radian * 180.) / CV_PI;
+}
+
+bool compareHex(double value, uint64_t hexLiteral) {
+    uint64_t doubleValueAsHex;
+    std::memcpy(&doubleValueAsHex, &value, sizeof(double));
+
+    return doubleValueAsHex == hexLiteral;
+}
 
 void mat2euler( Mat& rotationMatrix, double& yaw, double& pitch, double& roll, enum rotationOrder order)
 {
@@ -176,7 +194,9 @@ void mat2euler( Mat& rotationMatrix, double& yaw, double& pitch, double& roll, e
     default:
         break;
     }
-
+    yaw = compareHex(yaw, 0x8000000000000000) ? 0. : yaw;
+    pitch = compareHex(pitch, 0x8000000000000000) ? 0. : pitch;
+    roll = compareHex(roll, 0x8000000000000000) ? 0. : roll;
 }
 
 // Function to project 3D points onto a 2D image
@@ -223,14 +243,24 @@ Mat project3DPoints(const Mat& points3D, double yaw, double pitch, double roll, 
     }
 
 
-    RQDecomp3x3(rotationMatrix, mtxR, mtxQ, Qx, Qy, Qz);
+    decomposedEuler = RQDecomp3x3(rotationMatrix, mtxR, mtxQ, Qx, Qy, Qz);
+    volatile bool flag = false;
+    if (flag)
+    {
+        cout << rotationMatrixPitch << endl;
+        cout << Qx << endl;
+        cout << "=========" << endl;
+        cout << rotationMatrixYaw << endl;
+        cout << Qy << endl;
+        cout << "=========" << endl;
+        cout << rotationMatrixRoll << endl;
+        cout << Qz << endl;
+        cout << "=========" << endl;
+    }
 
 
     mat2euler(rotationMatrix, yaw_, pitch_, roll_, decompose);
     //std::cout << yaw << ',' << yaw_ << '\t' << pitch << ',' << pitch_ << '\t' << roll << ',' << roll_ << endl;
-
-    // Rotate 3D points
-    Mat rotated = rotationMatrix * points3D;
 
     // Intrinsic parameters
     double fx = 1000.0;  // focal length in x
@@ -241,8 +271,11 @@ Mat project3DPoints(const Mat& points3D, double yaw, double pitch, double roll, 
     // Distortion parameters (assuming no distortion)
     cv::Mat dist_coeffs = cv::Mat::zeros(4, 1, CV_64F);
 
-    // Rotation and translation (assumed to be identity for this example)
+    // Rotation to quaternion
     cv::Mat rvec = cv::Mat::zeros(3, 1, CV_64F);
+    Rodrigues(rotationMatrix, rvec);
+
+    // Translation
     cv::Mat tvec = cv::Mat::zeros(3, 1, CV_64F);
     tvec.at<double>(2) = 300;
 
@@ -251,7 +284,7 @@ Mat project3DPoints(const Mat& points3D, double yaw, double pitch, double roll, 
 
     // Project 3D point to 2D
     Mat image_points;
-    cv::projectPoints(rotated, rvec, tvec, camera_matrix, dist_coeffs, image_points);
+    cv::projectPoints(points3D, rvec, tvec, camera_matrix, dist_coeffs, image_points);
 
     return image_points;
 }
@@ -270,12 +303,24 @@ void putTextInternal(Mat& image, const string& result, const Point position)
 
 void drawDebug(Mat& image, double yaw, double pitch, double roll, double decomposedYaw, double decomposedPitch, double decomposedRoll)
 {
-    std::string result = cv::format("%1.3f, %1.3f, %1.3f", yaw, pitch, roll);
-    cv::Point textPosition(5, 580);
+    std::string result = cv::format("% 3.2f, % 3.2f, % 3.2f", rad2deg(pitch), rad2deg(yaw), rad2deg(roll));
+    cv::Point textPosition(5, 550);
     putTextInternal(image, result, textPosition);
 
-    result = cv::format("%1.3f, %1.3f, %1.3f", decomposedYaw, decomposedPitch, decomposedRoll);
-    textPosition = Point(5, 620);
+    result = cv::format("% 3.2f, % 3.2f, % 3.2f", rad2deg(decomposedPitch), rad2deg(decomposedYaw), rad2deg(decomposedRoll));
+    textPosition = Point(5, 590);
+    putTextInternal(image, result, textPosition);
+
+    //double pitchAPI = atan2(Qx.at<double>(1, 2), Qx.at<double>(2, 2));
+    //double r00 = Qy.at<double>(0, 0);
+    //double r02 = Qy.at<double>(0, 2);
+    //double yawAPI = atan2(r00, r02);
+    //double rollAPI = atan2(Qz.at<double>(0, 0), Qz.at<double>(1, 0));
+    double pitchAPI = decomposedEuler(0);
+    double yawAPI = decomposedEuler(1);
+    double rollAPI = decomposedEuler(2);
+    result = cv::format("% 3.2f, % 3.2f, % 3.2f", pitchAPI, yawAPI, rollAPI);
+    textPosition = Point(5, 630);
     putTextInternal(image, result, textPosition);
 }
 
@@ -283,7 +328,7 @@ void drawDebug(Mat& image, double yaw, double pitch, double roll, double decompo
 // Callback functions for trackbars
 void onEulerTrackbar(int value, void* ptr) {
     double* eulerAnglePtr = static_cast<double*>(ptr);
-    *eulerAnglePtr = value * CV_PI / 180.0;
+    *eulerAnglePtr = deg2rad(value);
 }
 
 void setAllTrackBarPos(int pos)
