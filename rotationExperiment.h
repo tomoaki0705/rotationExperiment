@@ -18,6 +18,8 @@ public:
     void decomposeEuler(angle& _pitch, angle& _yaw, angle& _roll);
     cv::Mat getRotationMatrix();
     void drawProjectedImage(const cv::Mat& points3D, cv::Mat& imageProjected);
+    enum rotationOrder getOrderCompose() const;
+    enum rotationOrder getOrderDecompose() const;
 
 private:
     angle pitch;

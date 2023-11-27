@@ -301,6 +301,17 @@ void CRotationExperiment::drawProjectedImage(const cv::Mat& points3D, cv::Mat& i
         prev_point = point;
     }
 }
+
+rotationOrder CRotationExperiment::getOrderCompose() const
+{
+    return orderCompose;
+}
+
+rotationOrder CRotationExperiment::getOrderDecompose() const
+{
+    return orderDecompose;
+}
+
 void CRotationExperiment::setComposeOrder(rotationOrder _order)
 {
     orderCompose = _order;

@@ -10,10 +10,10 @@ const char kWindowName[] = "3D Projection";
 const char trackBarX[] = "Pitch (X)";
 const char trackBarY[] = "Yaw (Y)";
 const char trackBarZ[] = "Roll (Z)";
-const char kFormat[] = "% 3.2f, % 3.2f, % 3.2f";
+const char kFormat[] = "%s % 3.2f, % 3.2f, % 3.2f";
 const int kSize = 640;
 const Size kWindowSize = Size(kSize, kSize);
-Mat points3D = (Mat_<coordinate>(3, 10) <<
+Mat points3D = (Mat_<coordinate>(3, 10) << /* F character */
     20,  -22, -22, -12, -12,  19,  19, -12,  -12,  20,  /* X */
     -50, -50,  50,  50,  10,  10,  0,    0,  -40, -40,  /* Y */
     0,     0,   0,   0,   0,   0,  0,    0,   0,    0); /* Z */
@@ -44,8 +44,9 @@ void drawDebug(Mat& image, CRotationExperiment& rotationEx)
 {
     // Input angle
     string result = format(
-        kFormat, 
-        rad2deg(rotationEx.getPitch()), 
+        kFormat,
+        order2String[rotationEx.getOrderCompose()],
+        rad2deg(rotationEx.getPitch()),
         rad2deg(rotationEx.getYaw()), 
         rad2deg(rotationEx.getRoll()));
     Point textPosition(5, image.rows - 90);
@@ -57,7 +58,8 @@ void drawDebug(Mat& image, CRotationExperiment& rotationEx)
     angle decomposeRoll = 0.;
     rotationEx.decomposeEuler(decomposePitch, decomposeYaw, decomposeRoll);
     result = format(
-        kFormat, 
+        kFormat,
+        order2String[rotationEx.getOrderDecompose()],
         rad2deg(decomposePitch), 
         rad2deg(decomposeYaw), 
         rad2deg(decomposeRoll));
@@ -72,7 +74,7 @@ void drawDebug(Mat& image, CRotationExperiment& rotationEx)
     angle pitchAPI = decomposedEuler(0);
     angle yawAPI = decomposedEuler(1);
     angle rollAPI = decomposedEuler(2);
-    result = format(kFormat, pitchAPI, yawAPI, rollAPI);
+    result = format(kFormat, "API", pitchAPI, yawAPI, rollAPI);
     textPosition = Point(5, image.rows - 10);
     putTextInternal(image, result, textPosition);
 }
