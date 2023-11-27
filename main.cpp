@@ -164,22 +164,22 @@ int main() {
         case '6':
             rotationEx.setComposeOrder(rotationOrder::ZYX);
             break;
-        case '!':
+        case SHIFT_1:
             rotationEx.setDecomposeOrder(rotationOrder::XYZ);
             break;
-        case '@':
+        case SHIFT_2:
             rotationEx.setDecomposeOrder(rotationOrder::XZY);
             break;
-        case '#':
+        case SHIFT_3:
             rotationEx.setDecomposeOrder(rotationOrder::YXZ);
             break;
-        case '$':
+        case SHIFT_4:
             rotationEx.setDecomposeOrder(rotationOrder::YZX);
             break;
-        case '%':
+        case SHIFT_5:
             rotationEx.setDecomposeOrder(rotationOrder::ZXY);
             break;
-        case '^':
+        case SHIFT_6:
             rotationEx.setDecomposeOrder(rotationOrder::ZYX);
             break;
         default:

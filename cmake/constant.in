@@ -1,0 +1,13 @@
+
+const char KEY_1 = '1';
+const char KEY_2 = '2';
+const char KEY_3 = '3';
+const char KEY_4 = '4';
+const char KEY_5 = '5';
+const char KEY_6 = '6';
+const char SHIFT_1 = '@SHIFT_1@';
+const char SHIFT_2 = '@SHIFT_2@';
+const char SHIFT_3 = '@SHIFT_3@';
+const char SHIFT_4 = '@SHIFT_4@';
+const char SHIFT_5 = '@SHIFT_5@';
+const char SHIFT_6 = '@SHIFT_6@';
