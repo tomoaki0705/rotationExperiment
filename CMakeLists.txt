@@ -9,11 +9,11 @@ set(TARGET rotationGUI)
 # Define the available layout options
 set(LAYOUT_JP "LAYOUT_JP")
 set(LAYOUT_EN "LAYOUT_EN")
-set(LAYOUT_OPTIONS "LAYOUT_JP" "LAYOUT_EN")
+set(LAYOUT_OPTIONS ${LAYOUT_JP} ${LAYOUT_EN})
 
 # Prompt the user to choose the layout option using a drop-down list
-set(LAYOUT_CHOICE ${LAYOUT_JP} CACHE STRING "Choose layout option" FORCE)
-set_property(CACHE LAYOUT_CHOICE PROPERTY STRINGS ${LAYOUT_OPTIONS})
+set(LAYOUT_CHOICE ${LAYOUT_JP} CACHE STRING "Choose layout option")
+set_property(CACHE LAYOUT_CHOICE PROPERTY STRINGS "" ${LAYOUT_OPTIONS})
 
 # Set the SHIFT_2 variable based on the chosen layout option
 set(SHIFT_1 "!")
