@@ -92,6 +92,28 @@ void setAllTrackBarPos(int pos) {
     setTrackbarPos(trackBarZ, kWindowName, pos);
 }
 
+#define MAKE_DEMO_IMAGE(_PITCH, _YAW, _ROLL, _COMPOSE, _DECOMPOSE, _DEBUG, _FILENAME) \
+{                                                    \
+auto swapCompose = rotationEx.getOrderCompose();     \
+auto swapDeCompose = rotationEx.getOrderDecompose(); \
+auto swapPitch = rotationEx.getPitch();              \
+auto swapYaw = rotationEx.getYaw();                  \
+auto swapRoll = rotationEx.getRoll();                \
+rotationEx.setComposeOrder(_COMPOSE);                \
+rotationEx.setDecomposeOrder(_DECOMPOSE);            \
+rotationEx.setPitch(deg2rad(_PITCH));                \
+rotationEx.setYaw(deg2rad(_YAW));                    \
+rotationEx.setRoll(deg2rad(_ROLL));                  \
+rotationEx.drawProjectedImage(points3D, image);      \
+if (_DEBUG) { drawDebug(image, rotationEx); }        \
+imwrite(_FILENAME, image);                           \
+rotationEx.setComposeOrder(swapCompose);             \
+rotationEx.setDecomposeOrder(swapDeCompose);         \
+rotationEx.setPitch(swapPitch);                      \
+rotationEx.setYaw(swapYaw);                          \
+rotationEx.setRoll(swapRoll);                        \
+}
+
 int main() {
     // Create a blank image
     Mat image(kWindowSize.height, kWindowSize.width, CV_8UC3, Scalar(255, 255, 255));
@@ -144,6 +166,35 @@ int main() {
         case 'Q':
         case 27:
             exitFlag = true;
+            break;
+        case 'd': // demo images
+            MAKE_DEMO_IMAGE(300,  0,  0, rotationOrder::XYZ, rotationOrder::XYZ, false, "image000.png");
+            MAKE_DEMO_IMAGE(330,  0,  0, rotationOrder::XYZ, rotationOrder::XYZ, false, "image001.png");
+            MAKE_DEMO_IMAGE(  0,  0,  0, rotationOrder::XYZ, rotationOrder::XYZ, false, "image002.png");
+            MAKE_DEMO_IMAGE( 30,  0,  0, rotationOrder::XYZ, rotationOrder::XYZ, false, "image003.png");
+            MAKE_DEMO_IMAGE( 60,  0,  0, rotationOrder::XYZ, rotationOrder::XYZ, false, "image004.png");
+            MAKE_DEMO_IMAGE(  0,300,  0, rotationOrder::XYZ, rotationOrder::XYZ, false, "image100.png");
+            MAKE_DEMO_IMAGE(  0,330,  0, rotationOrder::XYZ, rotationOrder::XYZ, false, "image101.png");
+            MAKE_DEMO_IMAGE(  0,  0,  0, rotationOrder::XYZ, rotationOrder::XYZ, false, "image102.png");
+            MAKE_DEMO_IMAGE(  0, 30,  0, rotationOrder::XYZ, rotationOrder::XYZ, false, "image103.png");
+            MAKE_DEMO_IMAGE(  0, 60,  0, rotationOrder::XYZ, rotationOrder::XYZ, false, "image104.png");
+            MAKE_DEMO_IMAGE(  0,  0,300, rotationOrder::XYZ, rotationOrder::XYZ, false, "image200.png");
+            MAKE_DEMO_IMAGE(  0,  0,330, rotationOrder::XYZ, rotationOrder::XYZ, false, "image201.png");
+            MAKE_DEMO_IMAGE(  0,  0,  0, rotationOrder::XYZ, rotationOrder::XYZ, false, "image202.png");
+            MAKE_DEMO_IMAGE(  0,  0, 30, rotationOrder::XYZ, rotationOrder::XYZ, false, "image203.png");
+            MAKE_DEMO_IMAGE(  0,  0, 60, rotationOrder::XYZ, rotationOrder::XYZ, false, "image204.png");
+            MAKE_DEMO_IMAGE( 60, 60, 60, rotationOrder::XYZ, rotationOrder::XYZ,  true, "image300.png");
+            MAKE_DEMO_IMAGE( 60, 60, 60, rotationOrder::XZY, rotationOrder::XYZ,  true, "image301.png");
+            MAKE_DEMO_IMAGE( 60, 60, 60, rotationOrder::YXZ, rotationOrder::XYZ,  true, "image302.png");
+            MAKE_DEMO_IMAGE( 60, 60, 60, rotationOrder::YZX, rotationOrder::XYZ,  true, "image303.png");
+            MAKE_DEMO_IMAGE( 60, 60, 60, rotationOrder::ZXY, rotationOrder::XYZ,  true, "image304.png");
+            MAKE_DEMO_IMAGE( 60, 60, 60, rotationOrder::ZYX, rotationOrder::XYZ,  true, "image305.png");
+            MAKE_DEMO_IMAGE( 60, 60, 60, rotationOrder::XYZ, rotationOrder::XYZ,  true, "image400.png");
+            MAKE_DEMO_IMAGE( 60, 60, 60, rotationOrder::XYZ, rotationOrder::XZY,  true, "image401.png");
+            MAKE_DEMO_IMAGE( 60, 60, 60, rotationOrder::XYZ, rotationOrder::YXZ,  true, "image402.png");
+            MAKE_DEMO_IMAGE( 60, 60, 60, rotationOrder::XYZ, rotationOrder::YZX,  true, "image403.png");
+            MAKE_DEMO_IMAGE( 60, 60, 60, rotationOrder::XYZ, rotationOrder::ZXY,  true, "image404.png");
+            MAKE_DEMO_IMAGE( 60, 60, 60, rotationOrder::XYZ, rotationOrder::ZYX,  true, "image405.png");
             break;
         case 'r':
             setAllTrackBarPos(0);
