@@ -185,9 +185,9 @@ void CRotationExperiment::decomposeEuler(angle& _pitch, angle& _yaw, angle& _rol
         }
         break;
     case ZYX:
-        if (r02 < 1)
+        if (r20 < 1)
         {
-            if (r02 > -1)
+            if (r20 > -1)
             {
                 _yaw = asin(-r20);
                 _roll = atan2(r10, r00);
