@@ -195,6 +195,13 @@ int main() {
             MAKE_DEMO_IMAGE( 60, 60, 60, rotationOrder::XYZ, rotationOrder::YZX,  true, "image403.png");
             MAKE_DEMO_IMAGE( 60, 60, 60, rotationOrder::XYZ, rotationOrder::ZXY,  true, "image404.png");
             MAKE_DEMO_IMAGE( 60, 60, 60, rotationOrder::XYZ, rotationOrder::ZYX,  true, "image405.png");
+            MAKE_DEMO_IMAGE( 60,  0,  0, rotationOrder::ZYX, rotationOrder::ZYX,  true, "image700.png");
+            MAKE_DEMO_IMAGE( 60, 45,  0, rotationOrder::ZYX, rotationOrder::ZYX,  true, "image701.png");
+            MAKE_DEMO_IMAGE( 60, 85,  0, rotationOrder::ZYX, rotationOrder::ZYX,  true, "image702.png");
+            MAKE_DEMO_IMAGE( 60, 90,  0, rotationOrder::ZYX, rotationOrder::ZYX,  true, "image703.png");
+            MAKE_DEMO_IMAGE( 60, 90, 20, rotationOrder::ZYX, rotationOrder::ZYX,  true, "image704.png");
+            MAKE_DEMO_IMAGE( 60, 90,-20, rotationOrder::ZYX, rotationOrder::ZYX,  true, "image705.png");
+            MAKE_DEMO_IMAGE(100, 90,-20, rotationOrder::ZYX, rotationOrder::ZYX,  true, "image706.png");
             break;
         case 'r':
             setAllTrackBarPos(0);
